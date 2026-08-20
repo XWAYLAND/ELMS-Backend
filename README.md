@@ -80,8 +80,8 @@ PENERBIT ───┘                  │
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/USERNAME/Backend-LMS.git
-cd Backend-LMS
+git clone https://github.com/XWAYLAND/ELMS-Backend.git
+cd ELMS-Backend
 
 # 2. Install dependencies
 composer install

@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Anggota extends Model
+class Anggota extends Authenticatable
 {
+    use HasApiTokens, Notifiable;
+
     protected $table = 'anggota';
     protected $primaryKey = 'nis';
     public $keyType = 'string';
@@ -16,16 +20,40 @@ class Anggota extends Model
         'nis',
         'nama_lengkap',
         'kelas',
+        'password',
         'fcm_token',
     ];
 
     /**
-     * Sembunyikan FCM token dari response JSON secara default.
+     * Sembunyikan password dan FCM token dari response JSON.
      */
-    protected $hidden = ['fcm_token'];
+    protected $hidden = [
+        'password',
+        'fcm_token',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+        ];
+    }
 
     /**
-     * Relasi ke peminjaman yang dilakukan oleh anggota ini.
+     * Accessor untuk mendapatkan inisial nama siswa (2 huruf pertama).
+     */
+    public function getInisialAttribute(): string
+    {
+        $words = explode(' ', trim($this->nama_lengkap ?? ''));
+        if (count($words) >= 2) {
+            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+        }
+
+        return strtoupper(substr($this->nama_lengkap ?? 'NN', 0, 2));
+    }
+
+    /**
+     * Relasi ke seluruh riwayat peminjaman siswa.
      */
     public function peminjaman(): HasMany
     {
@@ -33,11 +61,11 @@ class Anggota extends Model
     }
 
     /**
-     * Peminjaman yang sedang aktif (dipinjam atau terlambat).
+     * Peminjaman yang sedang aktif (menunggu, aktif, menunggu_kembali, terlambat).
      */
     public function peminjamanAktif(): HasMany
     {
         return $this->hasMany(Peminjaman::class, 'nis', 'nis')
-            ->whereIn('status', ['dipinjam', 'terlambat']);
+            ->whereIn('status', ['menunggu', 'aktif', 'menunggu_kembali', 'terlambat']);
     }
 }

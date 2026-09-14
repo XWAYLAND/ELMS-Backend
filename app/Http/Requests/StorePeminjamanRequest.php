@@ -14,32 +14,24 @@ class StorePeminjamanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_transaksi'  => ['required', 'string', 'max:50', 'unique:peminjaman,id_transaksi'],
-            'waktu_pinjam'  => ['required', 'date'],
-            'batas_kembali' => ['required', 'date', 'after:waktu_pinjam'],
-            'status'        => ['required', 'in:pending,dipinjam,dikembalikan,terlambat'],
-            'nis'           => ['required', 'string', 'exists:anggota,nis'],
-            'isbn'          => ['required', 'string', 'exists:buku,isbn'],
-            'id_pegawai'    => ['required', 'string', 'exists:pegawai,id_pegawai'],
+            'isbn'        => ['required', 'string', 'exists:buku,isbn'],
+            'durasi_hari' => ['required', 'integer', 'min:1', 'max:30'],
+            'nis'         => ['nullable', 'string', 'exists:anggota,nis'],
+            'id_pegawai'  => ['nullable', 'string', 'exists:pegawai,id_pegawai'],
+            'status'      => ['nullable', 'in:menunggu,aktif,menunggu_kembali,terlambat,dikembalikan,ditolak'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'id_transaksi.required'  => 'ID Transaksi wajib diisi.',
-            'id_transaksi.unique'    => 'ID Transaksi sudah digunakan.',
-            'waktu_pinjam.required'  => 'Waktu pinjam wajib diisi.',
-            'waktu_pinjam.date'      => 'Waktu pinjam harus berupa tanggal yang valid.',
-            'batas_kembali.required' => 'Batas kembali wajib diisi.',
-            'batas_kembali.after'    => 'Batas kembali harus setelah waktu pinjam.',
-            'status.in'              => 'Status tidak valid. Pilihan: pending, dipinjam, dikembalikan, terlambat.',
-            'nis.required'           => 'NIS anggota wajib diisi.',
-            'nis.exists'             => 'Anggota tidak ditemukan.',
-            'isbn.required'          => 'ISBN buku wajib diisi.',
-            'isbn.exists'            => 'Buku tidak ditemukan.',
-            'id_pegawai.required'    => 'ID Pegawai wajib diisi.',
-            'id_pegawai.exists'      => 'Pegawai tidak ditemukan.',
+            'isbn.required'        => 'ISBN buku wajib diisi.',
+            'isbn.exists'          => 'Buku tidak ditemukan.',
+            'durasi_hari.required' => 'Durasi peminjaman wajib diisi.',
+            'durasi_hari.integer'  => 'Durasi hari harus berupa angka.',
+            'durasi_hari.min'      => 'Durasi peminjaman minimal 1 hari.',
+            'durasi_hari.max'      => 'Durasi peminjaman maksimal 30 hari.',
+            'nis.exists'           => 'Anggota tidak ditemukan.',
         ];
     }
 }

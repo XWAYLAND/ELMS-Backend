@@ -36,6 +36,19 @@ class Pegawai extends Authenticatable
     }
 
     /**
+     * Accessor untuk mendapatkan inisial nama pegawai.
+     */
+    public function getInisialAttribute(): string
+    {
+        $words = explode(' ', trim($this->nama ?? ''));
+        if (count($words) >= 2) {
+            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+        }
+
+        return strtoupper(substr($this->nama ?? 'PG', 0, 2));
+    }
+
+    /**
      * Relasi ke peminjaman yang diverifikasi oleh pegawai ini.
      */
     public function peminjaman(): HasMany

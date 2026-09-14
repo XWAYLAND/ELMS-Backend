@@ -10,14 +10,14 @@ class JenisSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['id_jenis' => 'JNS001', 'nama_jenis' => 'Fiksi'],
-            ['id_jenis' => 'JNS002', 'nama_jenis' => 'Non-Fiksi'],
-            ['id_jenis' => 'JNS003', 'nama_jenis' => 'Sains & Teknologi'],
-            ['id_jenis' => 'JNS004', 'nama_jenis' => 'Sejarah'],
-            ['id_jenis' => 'JNS005', 'nama_jenis' => 'Biografi'],
-            ['id_jenis' => 'JNS006', 'nama_jenis' => 'Pendidikan'],
-            ['id_jenis' => 'JNS007', 'nama_jenis' => 'Agama & Spiritualitas'],
-            ['id_jenis' => 'JNS008', 'nama_jenis' => 'Komik & Manga'],
+            ['id_jenis' => 'JNS-001', 'nama_jenis' => 'Administrasi'],
+            ['id_jenis' => 'JNS-002', 'nama_jenis' => 'Agama'],
+            ['id_jenis' => 'JNS-003', 'nama_jenis' => 'Ekonomi'],
+            ['id_jenis' => 'JNS-004', 'nama_jenis' => 'Ensiklopedia'],
+            ['id_jenis' => 'JNS-005', 'nama_jenis' => 'Fiksi'],
+            ['id_jenis' => 'JNS-006', 'nama_jenis' => 'Humor'],
+            ['id_jenis' => 'JNS-007', 'nama_jenis' => 'Inspirasi'],
+            ['id_jenis' => 'JNS-008', 'nama_jenis' => 'Sejarah'],
         ];
 
         foreach ($data as $item) {

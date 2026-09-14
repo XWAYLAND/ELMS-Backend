@@ -10,11 +10,11 @@ class PenerbitSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['id_penerbit' => 'PNR001', 'nama_penerbit' => 'Gramedia Pustaka Utama'],
-            ['id_penerbit' => 'PNR002', 'nama_penerbit' => 'Mizan'],
-            ['id_penerbit' => 'PNR003', 'nama_penerbit' => 'Erlangga'],
-            ['id_penerbit' => 'PNR004', 'nama_penerbit' => 'Bentang Pustaka'],
-            ['id_penerbit' => 'PNR005', 'nama_penerbit' => 'Republika Penerbit'],
+            ['id_penerbit' => 'PNB-001', 'nama_penerbit' => 'Yayasan Pustaka Obor'],
+            ['id_penerbit' => 'PNB-002', 'nama_penerbit' => 'Self Published'],
+            ['id_penerbit' => 'PNB-003', 'nama_penerbit' => 'Gramedia'],
+            ['id_penerbit' => 'PNB-004', 'nama_penerbit' => 'HarperOne'],
+            ['id_penerbit' => 'PNB-005', 'nama_penerbit' => 'Faber & Faber'],
         ];
 
         foreach ($data as $item) {

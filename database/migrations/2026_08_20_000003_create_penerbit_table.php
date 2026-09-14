@@ -9,9 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('penerbit', function (Blueprint $table) {
-            $table->string('id_penerbit')->primary();
-            $table->string('nama_penerbit');
-            $table->timestamps();
+            $table->string('id_penerbit', 10)->primary();
+            $table->string('nama_penerbit', 150)->unique();
         });
     }
 

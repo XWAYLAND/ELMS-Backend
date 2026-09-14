@@ -14,26 +14,26 @@ class UpdateBukuRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'judul'          => ['sometimes', 'required', 'string', 'max:255'],
-            'edisi'          => ['nullable', 'string', 'max:50'],
-            'deskripsi_fisik'=> ['nullable', 'string'],
-            'bahasa'         => ['sometimes', 'required', 'string', 'max:50'],
-            'cover'          => ['nullable', 'url', 'max:500'],
-            'id_jenis'       => ['sometimes', 'required', 'string', 'exists:jenis,id_jenis'],
-            'id_penulis'     => ['sometimes', 'required', 'string', 'exists:penulis,id_penulis'],
-            'id_penerbit'    => ['sometimes', 'required', 'string', 'exists:penerbit,id_penerbit'],
+            'judul'           => ['sometimes', 'required', 'string', 'max:255'],
+            'cover'           => ['nullable', 'string', 'max:500'],
+            'cover_file'      => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'edisi'           => ['nullable', 'string', 'max:100'],
+            'deskripsi_fisik' => ['nullable', 'string', 'max:255'],
+            'bahasa'          => ['nullable', 'string', 'max:50'],
+            'id_jenis'        => ['sometimes', 'required', 'string', 'exists:jenis,id_jenis'],
+            'penulis'         => ['sometimes', 'required', 'string', 'max:255'],
+            'penerbit'        => ['sometimes', 'required', 'string', 'max:255'],
+            'tersedia'        => ['sometimes', 'boolean'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'judul.required'       => 'Judul buku wajib diisi.',
-            'bahasa.required'      => 'Bahasa wajib diisi.',
-            'cover.url'            => 'Cover harus berupa URL yang valid.',
-            'id_jenis.exists'      => 'Jenis buku tidak ditemukan.',
-            'id_penulis.exists'    => 'Penulis tidak ditemukan.',
-            'id_penerbit.exists'   => 'Penerbit tidak ditemukan.',
+            'judul.required'    => 'Judul buku wajib diisi.',
+            'id_jenis.exists'   => 'Jenis buku tidak ditemukan.',
+            'penulis.required'  => 'Penulis wajib diisi.',
+            'penerbit.required' => 'Penerbit wajib diisi.',
         ];
     }
 }

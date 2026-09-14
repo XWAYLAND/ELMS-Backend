@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Anggota;
 use App\Models\Pegawai;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -16,49 +17,83 @@ class AuthApiTest extends TestCase
         parent::setUp();
 
         Pegawai::create([
-            'id_pegawai' => 'PGW001',
+            'id_pegawai' => 'PGW-001',
             'nama'       => 'Admin Perpustakaan',
             'email'      => 'admin@elibrary.com',
-            'password'   => Hash::make('password123'),
+            'password'   => Hash::make('admin123'),
+        ]);
+
+        Anggota::create([
+            'nis'          => '14156',
+            'nama_lengkap' => 'Gazhy Arkana',
+            'kelas'        => 'XII RPL 1',
+            'password'     => Hash::make('password'),
         ]);
     }
 
-    public function test_pegawai_can_login_with_valid_credentials(): void
+    public function test_petugas_can_login_with_id_and_password(): void
     {
         $response = $this->postJson('/api/auth/login', [
-            'email'    => 'admin@elibrary.com',
-            'password' => 'password123',
+            'identifier' => 'PGW-001',
+            'password'   => 'admin123',
         ]);
 
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Login berhasil.',
+                'message' => 'Login petugas berhasil.',
+                'data'    => [
+                    'role' => 'petugas',
+                    'user' => [
+                        'id_pegawai' => 'PGW-001',
+                        'nama'       => 'Admin Perpustakaan',
+                    ],
+                ],
             ])
             ->assertJsonStructure([
                 'data' => [
-                    'pegawai' => ['id_pegawai', 'nama', 'email'],
                     'token',
                     'token_type',
                 ],
             ]);
     }
 
-    public function test_pegawai_cannot_login_with_invalid_password(): void
+    public function test_siswa_can_login_with_nis_and_password(): void
     {
         $response = $this->postJson('/api/auth/login', [
-            'email'    => 'admin@elibrary.com',
-            'password' => 'wrongpassword',
+            'identifier' => '14156',
+            'password'   => 'password',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Login siswa berhasil.',
+                'data'    => [
+                    'role' => 'siswa',
+                    'user' => [
+                        'nis'          => '14156',
+                        'nama_lengkap' => 'Gazhy Arkana',
+                    ],
+                ],
+            ]);
+    }
+
+    public function test_cannot_login_with_invalid_credentials(): void
+    {
+        $response = $this->postJson('/api/auth/login', [
+            'identifier' => '14156',
+            'password'   => 'wrongpassword',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['identifier']);
     }
 
-    public function test_authenticated_pegawai_can_get_profile(): void
+    public function test_authenticated_siswa_can_get_profile(): void
     {
-        $pegawai = Pegawai::first();
-        $token = $pegawai->createToken('test-token')->plainTextToken;
+        $siswa = Anggota::first();
+        $token = $siswa->createToken('test-token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->getJson('/api/auth/me');
@@ -66,17 +101,17 @@ class AuthApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'data' => [
-                    'id_pegawai' => 'PGW001',
-                    'email'      => 'admin@elibrary.com',
+                'data'    => [
+                    'role' => 'siswa',
+                    'nis'  => '14156',
                 ],
             ]);
     }
 
-    public function test_authenticated_pegawai_can_logout(): void
+    public function test_authenticated_user_can_logout(): void
     {
-        $pegawai = Pegawai::first();
-        $token = $pegawai->createToken('test-token')->plainTextToken;
+        $siswa = Anggota::first();
+        $token = $siswa->createToken('test-token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/auth/logout');

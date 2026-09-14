@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateAnggotaRequest extends FormRequest
 {
@@ -17,7 +16,8 @@ class UpdateAnggotaRequest extends FormRequest
         return [
             'nama_lengkap' => ['sometimes', 'required', 'string', 'max:150'],
             'kelas'        => ['sometimes', 'required', 'string', 'max:20'],
-            'fcm_token'    => ['nullable', 'string'],
+            'password'     => ['nullable', 'string', 'min:6'],
+            'fcm_token'    => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -26,6 +26,7 @@ class UpdateAnggotaRequest extends FormRequest
         return [
             'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
             'kelas.required'        => 'Kelas wajib diisi.',
+            'password.min'          => 'Password minimal 6 karakter.',
         ];
     }
 }

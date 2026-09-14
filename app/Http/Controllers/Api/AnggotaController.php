@@ -46,7 +46,12 @@ class AnggotaController extends Controller
 
     public function store(StoreAnggotaRequest $request): JsonResponse
     {
-        $anggota = Anggota::create($request->validated());
+        $data = $request->validated();
+        if (empty($data['password'])) {
+            $data['password'] = 'password';
+        }
+
+        $anggota = Anggota::create($data);
 
         return response()->json([
             'success' => true,

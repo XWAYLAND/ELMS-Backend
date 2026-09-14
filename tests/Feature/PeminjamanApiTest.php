@@ -7,8 +7,6 @@ use App\Models\Buku;
 use App\Models\Jenis;
 use App\Models\Pegawai;
 use App\Models\Peminjaman;
-use App\Models\Penerbit;
-use App\Models\Penulis;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -17,94 +15,155 @@ class PeminjamanApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected string $token;
+    protected string $staffToken;
+    protected string $studentToken;
+    protected Anggota $siswa;
+    protected Pegawai $pegawai;
+    protected Buku $buku;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Jenis::create(['id_jenis' => 'JNS001', 'nama_jenis' => 'Fiksi']);
-        Penulis::create(['id_penulis' => 'PNL001', 'nama_penulis' => 'Andrea Hirata']);
-        Penerbit::create(['id_penerbit' => 'PNR001', 'nama_penerbit' => 'Bentang Pustaka']);
+        Jenis::create(['id_jenis' => 'JNS-005', 'nama_jenis' => 'Fiksi']);
 
-        Buku::create([
+        $this->buku = Buku::create([
             'isbn'        => '978-001',
             'judul'       => 'Laskar Pelangi',
             'bahasa'      => 'Indonesia',
-            'id_jenis'    => 'JNS001',
-            'id_penulis'  => 'PNL001',
-            'id_penerbit' => 'PNR001',
+            'tersedia'    => true,
+            'id_jenis'    => 'JNS-005',
+            'penulis'     => 'Andrea Hirata',
+            'penerbit'    => 'Gramedia',
         ]);
 
-        Anggota::create([
-            'nis'          => '2024001',
-            'nama_lengkap' => 'Ahmad Fauzi',
-            'kelas'        => 'X-A',
+        $this->siswa = Anggota::create([
+            'nis'          => '14156',
+            'nama_lengkap' => 'Gazhy Arkana',
+            'kelas'        => 'XII RPL 1',
+            'password'     => Hash::make('password'),
         ]);
 
-        $pegawai = Pegawai::create([
-            'id_pegawai' => 'PGW001',
+        $this->pegawai = Pegawai::create([
+            'id_pegawai' => 'PGW-001',
             'nama'       => 'Admin',
             'email'      => 'admin@elibrary.com',
-            'password'   => Hash::make('password123'),
+            'password'   => Hash::make('admin123'),
         ]);
 
-        $this->token = $pegawai->createToken('test-token')->plainTextToken;
+        $this->studentToken = $this->siswa->createToken('student-token')->plainTextToken;
+        $this->staffToken   = $this->pegawai->createToken('staff-token')->plainTextToken;
     }
 
-    public function test_can_create_borrowing_transaction(): void
+    public function test_siswa_can_request_borrowing(): void
     {
-        $payload = [
-            'id_transaksi'  => 'TRX001',
-            'waktu_pinjam'  => now()->toDateString(),
-            'batas_kembali' => now()->addDays(7)->toDateString(),
-            'status'        => 'dipinjam',
-            'nis'           => '2024001',
-            'isbn'          => '978-001',
-            'id_pegawai'    => 'PGW001',
-        ];
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/peminjaman', $payload);
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->studentToken)
+            ->postJson('/api/peminjaman/pinjam', [
+                'isbn'        => '978-001',
+                'durasi_hari' => 7,
+            ]);
 
         $response->assertStatus(201)
             ->assertJson([
                 'success' => true,
-                'message' => 'Peminjaman berhasil dibuat.',
+                'data'    => [
+                    'nis'    => '14156',
+                    'isbn'   => '978-001',
+                    'status' => 'menunggu',
+                ],
+            ])
+            ->assertJsonStructure([
+                'data' => [
+                    'id_transaksi',
+                    'kode_unik',
+                    'kode_unik_expires_at',
+                ],
             ]);
 
-        $this->assertDatabaseHas('peminjaman', ['id_transaksi' => 'TRX001']);
+        // Buku harus terkunci (tidak tersedia)
+        $this->assertDatabaseHas('buku', [
+            'isbn'     => '978-001',
+            'tersedia' => false,
+        ]);
     }
 
-    public function test_can_filter_loans_due_soon(): void
+    public function test_petugas_can_verify_and_approve_loan(): void
     {
-        // Transaction due tomorrow
-        Peminjaman::create([
-            'id_transaksi'  => 'TRX-DUE',
-            'waktu_pinjam'  => now()->subDays(6)->toDateString(),
-            'batas_kembali' => now()->addDay()->toDateString(),
-            'status'        => 'dipinjam',
-            'nis'           => '2024001',
-            'isbn'          => '978-001',
-            'id_pegawai'    => 'PGW001',
+        $peminjaman = Peminjaman::create([
+            'nis'         => '14156',
+            'isbn'        => '978-001',
+            'durasi_hari' => 7,
+            'status'      => 'menunggu',
         ]);
 
-        // Transaction returned (should not show up in notifications)
-        Peminjaman::create([
-            'id_transaksi'  => 'TRX-RETURNED',
-            'waktu_pinjam'  => now()->subDays(10)->toDateString(),
-            'batas_kembali' => now()->subDays(3)->toDateString(),
-            'status'        => 'dikembalikan',
-            'nis'           => '2024001',
-            'isbn'          => '978-001',
-            'id_pegawai'    => 'PGW001',
+        // Verifikasi kode unik
+        $verifyResponse = $this->withHeader('Authorization', 'Bearer ' . $this->staffToken)
+            ->postJson('/api/peminjaman/verifikasi-kode', [
+                'kode_unik' => $peminjaman->kode_unik,
+            ]);
+
+        $verifyResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'id_transaksi'    => $peminjaman->id_transaksi,
+                    'can_be_approved' => true,
+                ],
+            ]);
+
+        // Approve loan
+        $approveResponse = $this->withHeader('Authorization', 'Bearer ' . $this->staffToken)
+            ->postJson("/api/peminjaman/{$peminjaman->id_transaksi}/approve");
+
+        $approveResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'status'     => 'aktif',
+                    'id_pegawai' => 'PGW-001',
+                ],
+            ]);
+    }
+
+    public function test_siswa_can_return_and_petugas_confirm_return(): void
+    {
+        $peminjaman = Peminjaman::create([
+            'nis'         => '14156',
+            'isbn'        => '978-001',
+            'durasi_hari' => 7,
+            'status'      => 'aktif',
+            'batas_waktu' => now()->addDays(7),
+            'id_pegawai'  => 'PGW-001',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/peminjaman/jatuh-tempo?hari=3');
+        // Siswa ajukan pengembalian
+        $returnReqResponse = $this->withHeader('Authorization', 'Bearer ' . $this->studentToken)
+            ->patchJson("/api/peminjaman/{$peminjaman->id_transaksi}/ajukan-kembali");
 
-        $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id_transaksi', 'TRX-DUE');
+        $returnReqResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'status' => 'menunggu_kembali',
+                ],
+            ]);
+
+        // Petugas konfirmasi pengembalian
+        $confirmResponse = $this->withHeader('Authorization', 'Bearer ' . $this->staffToken)
+            ->postJson("/api/peminjaman/{$peminjaman->id_transaksi}/confirm-return");
+
+        $confirmResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'status' => 'dikembalikan',
+                ],
+            ]);
+
+        // Buku kembali tersedia
+        $this->assertDatabaseHas('buku', [
+            'isbn'     => '978-001',
+            'tersedia' => true,
+        ]);
     }
 }

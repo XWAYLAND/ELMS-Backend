@@ -9,20 +9,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('buku', function (Blueprint $table) {
-            $table->string('isbn')->primary();
-            $table->string('judul');
-            $table->string('edisi')->nullable();
-            $table->text('deskripsi_fisik')->nullable();
-            $table->string('bahasa')->default('Indonesia');
-            $table->string('cover')->nullable(); // URL gambar cover
-            $table->string('id_jenis');
-            $table->string('id_penulis');
-            $table->string('id_penerbit');
+            $table->string('isbn', 30)->primary();
+            $table->string('judul', 255);
+            $table->string('slug', 300)->unique()->nullable();
+            $table->string('cover', 500)->nullable();
+            $table->string('edisi', 100)->nullable();
+            $table->string('deskripsi_fisik', 255)->nullable();
+            $table->string('bahasa', 50)->nullable()->default('Indonesia');
+            $table->boolean('tersedia')->default(true);
+            $table->string('id_jenis', 10);
+            $table->string('penulis', 255)->nullable();
+            $table->string('penerbit', 255)->nullable();
             $table->timestamps();
 
             $table->foreign('id_jenis')->references('id_jenis')->on('jenis')->onDelete('restrict');
-            $table->foreign('id_penulis')->references('id_penulis')->on('penulis')->onDelete('restrict');
-            $table->foreign('id_penerbit')->references('id_penerbit')->on('penerbit')->onDelete('restrict');
         });
     }
 

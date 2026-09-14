@@ -19,10 +19,10 @@ class AnggotaApiTest extends TestCase
         parent::setUp();
 
         $pegawai = Pegawai::create([
-            'id_pegawai' => 'PGW001',
+            'id_pegawai' => 'PGW-001',
             'nama'       => 'Admin',
             'email'      => 'admin@elibrary.com',
-            'password'   => Hash::make('password123'),
+            'password'   => Hash::make('admin123'),
         ]);
 
         $this->token = $pegawai->createToken('test-token')->plainTextToken;
@@ -31,9 +31,9 @@ class AnggotaApiTest extends TestCase
     public function test_can_create_and_fetch_anggota(): void
     {
         $payload = [
-            'nis'          => '2024001',
-            'nama_lengkap' => 'Ahmad Fauzi',
-            'kelas'        => 'X-A',
+            'nis'          => '14156',
+            'nama_lengkap' => 'Gazhy Arkana',
+            'kelas'        => 'XII RPL 1',
         ];
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
@@ -43,22 +43,28 @@ class AnggotaApiTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data' => [
-                    'nis'          => '2024001',
-                    'nama_lengkap' => 'Ahmad Fauzi',
-                    'kelas'        => 'X-A',
+                    'nis'          => '14156',
+                    'nama_lengkap' => 'Gazhy Arkana',
+                    'kelas'        => 'XII RPL 1',
+                    'inisial'      => 'GA',
                 ],
             ]);
+
+        $this->assertDatabaseHas('anggota', [
+            'nis' => '14156',
+        ]);
     }
 
     public function test_can_update_fcm_token(): void
     {
         Anggota::create([
-            'nis'          => '2024001',
-            'nama_lengkap' => 'Ahmad Fauzi',
-            'kelas'        => 'X-A',
+            'nis'          => '14156',
+            'nama_lengkap' => 'Gazhy Arkana',
+            'kelas'        => 'XII RPL 1',
+            'password'     => Hash::make('password'),
         ]);
 
-        $response = $this->putJson('/api/anggota/2024001/fcm-token', [
+        $response = $this->putJson('/api/anggota/14156/fcm-token', [
             'fcm_token' => 'sample-fcm-token-12345',
         ]);
 
@@ -66,7 +72,7 @@ class AnggotaApiTest extends TestCase
             ->assertJson(['success' => true, 'message' => 'FCM token berhasil diperbarui.']);
 
         $this->assertDatabaseHas('anggota', [
-            'nis'       => '2024001',
+            'nis'       => '14156',
             'fcm_token' => 'sample-fcm-token-12345',
         ]);
     }

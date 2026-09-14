@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             BukuSeeder::class,
             AnggotaSeeder::class,
             PegawaiSeeder::class,
+            PeminjamanSeeder::class,
         ]);
     }
 }

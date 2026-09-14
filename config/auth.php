@@ -41,9 +41,19 @@ return [
             'provider' => 'users',
         ],
 
+        'anggota' => [
+            'driver' => 'session',
+            'provider' => 'anggota',
+        ],
+
+        'pegawai' => [
+            'driver' => 'session',
+            'provider' => 'pegawai',
+        ],
+
         'sanctum' => [
             'driver' => 'sanctum',
-            'provider' => 'pegawai',
+            'provider' => null,
         ],
     ],
 
@@ -70,7 +80,11 @@ return [
             'model'  => env('AUTH_MODEL', App\Models\User::class),
         ],
 
-        // Provider untuk autentikasi pegawai/pustakawan via Sanctum
+        'anggota' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\Anggota::class,
+        ],
+
         'pegawai' => [
             'driver' => 'eloquent',
             'model'  => App\Models\Pegawai::class,

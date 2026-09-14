@@ -13,6 +13,7 @@ class PegawaiResource extends JsonResource
             'id_pegawai' => $this->id_pegawai,
             'nama'       => $this->nama,
             'email'      => $this->email,
+            'inisial'    => $this->inisial,
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];

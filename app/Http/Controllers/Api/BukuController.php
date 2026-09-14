@@ -9,6 +9,8 @@ use App\Http\Resources\BukuResource;
 use App\Models\Buku;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BukuController extends Controller
 {
@@ -16,24 +18,37 @@ class BukuController extends Controller
      * Daftar buku dengan fitur pencarian & filter.
      *
      * Query params:
-     *  - search   : cari berdasarkan judul, penulis, penerbit, jenis
-     *  - id_jenis    : filter berdasarkan jenis
-     *  - id_penulis  : filter berdasarkan penulis
-     *  - id_penerbit : filter berdasarkan penerbit
-     *  - bahasa      : filter berdasarkan bahasa
-     *  - per_page    : jumlah item per halaman (default: 15)
+     *  - search   : cari berdasarkan judul, ISBN, penulis, penerbit, atau jenis
+     *  - id_jenis : filter berdasarkan jenis / kategori (contoh: JNS-005)
+     *  - tersedia : filter ketersediaan (true/false atau 1/0)
+     *  - bahasa   : filter berdasarkan bahasa
+     *  - per_page : jumlah item per halaman (default: 15)
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Buku::with(['jenis', 'penulis', 'penerbit'])
+        $query = Buku::with(['jenis'])
             ->search($request->input('search'))
-            ->filterJenis($request->input('id_jenis'))
-            ->filterPenulis($request->input('id_penulis'))
-            ->filterPenerbit($request->input('id_penerbit'))
+            ->byKategori($request->input('id_jenis'))
             ->filterBahasa($request->input('bahasa'));
 
-        $perPage = $request->input('per_page', 15);
-        $buku    = $query->paginate($perPage);
+        if ($request->has('tersedia')) {
+            $tersedia = filter_var($request->input('tersedia'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($tersedia !== null) {
+                $query->where('tersedia', $tersedia);
+            }
+        }
+
+        if ($request->boolean('all')) {
+            $buku = $query->latest()->get();
+            return response()->json([
+                'success' => true,
+                'message' => 'Seluruh data buku berhasil diambil.',
+                'data'    => BukuResource::collection($buku),
+            ]);
+        }
+
+        $perPage = (int) $request->input('per_page', 15);
+        $buku    = $query->latest()->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -48,10 +63,20 @@ class BukuController extends Controller
         ]);
     }
 
+    /**
+     * Tambah data buku baru.
+     */
     public function store(StoreBukuRequest $request): JsonResponse
     {
-        $buku = Buku::create($request->validated());
-        $buku->load(['jenis', 'penulis', 'penerbit']);
+        $data = $request->validated();
+
+        if ($request->hasFile('cover_file')) {
+            $path = $request->file('cover_file')->store('covers', 'public');
+            $data['cover'] = $path;
+        }
+
+        $buku = Buku::create($data);
+        $buku->load(['jenis']);
 
         return response()->json([
             'success' => true,
@@ -60,9 +85,15 @@ class BukuController extends Controller
         ], 201);
     }
 
-    public function show(string $isbn): JsonResponse
+    /**
+     * Detail buku berdasarkan ISBN atau Slug.
+     */
+    public function show(string $identifier): JsonResponse
     {
-        $buku = Buku::with(['jenis', 'penulis', 'penerbit'])->findOrFail($isbn);
+        $buku = Buku::with(['jenis'])
+            ->where('isbn', $identifier)
+            ->orWhere('slug', $identifier)
+            ->firstOrFail();
 
         return response()->json([
             'success' => true,
@@ -71,11 +102,24 @@ class BukuController extends Controller
         ]);
     }
 
+    /**
+     * Update data buku.
+     */
     public function update(UpdateBukuRequest $request, string $isbn): JsonResponse
     {
         $buku = Buku::findOrFail($isbn);
-        $buku->update($request->validated());
-        $buku->load(['jenis', 'penulis', 'penerbit']);
+        $data = $request->validated();
+
+        if ($request->hasFile('cover_file')) {
+            if ($buku->cover && ! Str::startsWith($buku->cover, ['http://', 'https://'])) {
+                Storage::disk('public')->delete($buku->cover);
+            }
+            $path = $request->file('cover_file')->store('covers', 'public');
+            $data['cover'] = $path;
+        }
+
+        $buku->update($data);
+        $buku->load(['jenis']);
 
         return response()->json([
             'success' => true,
@@ -84,9 +128,17 @@ class BukuController extends Controller
         ]);
     }
 
+    /**
+     * Hapus data buku.
+     */
     public function destroy(string $isbn): JsonResponse
     {
         $buku = Buku::findOrFail($isbn);
+
+        if ($buku->cover && ! Str::startsWith($buku->cover, ['http://', 'https://'])) {
+            Storage::disk('public')->delete($buku->cover);
+        }
+
         $buku->delete();
 
         return response()->json([

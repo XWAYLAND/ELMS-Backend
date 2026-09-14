@@ -14,24 +14,22 @@ class StorePegawaiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_pegawai' => ['required', 'string', 'max:50', 'unique:pegawai,id_pegawai'],
+            'id_pegawai' => ['required', 'string', 'max:20', 'unique:pegawai,id_pegawai'],
             'nama'       => ['required', 'string', 'max:150'],
-            'email'      => ['required', 'email', 'unique:pegawai,email'],
-            'password'   => ['required', 'string', 'min:8', 'confirmed'],
+            'email'      => ['nullable', 'email', 'max:255', 'unique:pegawai,email'],
+            'password'   => ['required', 'string', 'min:6'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'id_pegawai.required'  => 'ID Pegawai wajib diisi.',
-            'id_pegawai.unique'    => 'ID Pegawai sudah terdaftar.',
-            'nama.required'        => 'Nama wajib diisi.',
-            'email.required'       => 'Email wajib diisi.',
-            'email.unique'         => 'Email sudah terdaftar.',
-            'password.required'    => 'Password wajib diisi.',
-            'password.min'         => 'Password minimal 8 karakter.',
-            'password.confirmed'   => 'Konfirmasi password tidak cocok.',
+            'id_pegawai.required' => 'ID Pegawai wajib diisi.',
+            'id_pegawai.unique'   => 'ID Pegawai sudah terdaftar.',
+            'nama.required'       => 'Nama wajib diisi.',
+            'email.unique'        => 'Email sudah terdaftar.',
+            'password.required'   => 'Password wajib diisi.',
+            'password.min'        => 'Password minimal 6 karakter.',
         ];
     }
 }

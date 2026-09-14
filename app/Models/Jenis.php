@@ -11,6 +11,7 @@ class Jenis extends Model
     protected $primaryKey = 'id_jenis';
     public $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
 
     protected $fillable = [
         'id_jenis',

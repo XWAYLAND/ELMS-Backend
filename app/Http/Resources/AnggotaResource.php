@@ -13,6 +13,7 @@ class AnggotaResource extends JsonResource
             'nis'          => $this->nis,
             'nama_lengkap' => $this->nama_lengkap,
             'kelas'        => $this->kelas,
+            'inisial'      => $this->inisial,
             'created_at'   => $this->created_at?->toDateTimeString(),
             'updated_at'   => $this->updated_at?->toDateTimeString(),
         ];

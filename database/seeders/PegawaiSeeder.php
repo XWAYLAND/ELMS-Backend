@@ -10,24 +10,23 @@ class PegawaiSeeder extends Seeder
 {
     public function run(): void
     {
-        Pegawai::firstOrCreate(
-            ['id_pegawai' => 'PGW001'],
+        $data = [
             [
-                'id_pegawai' => 'PGW001',
+                'id_pegawai' => 'PGW-001',
                 'nama'       => 'Admin Perpustakaan',
                 'email'      => 'admin@elibrary.com',
-                'password'   => Hash::make('password123'),
-            ]
-        );
-
-        Pegawai::firstOrCreate(
-            ['id_pegawai' => 'PGW002'],
+                'password'   => Hash::make('admin123'),
+            ],
             [
-                'id_pegawai' => 'PGW002',
-                'nama'       => 'Budi Santoso',
-                'email'      => 'budi@elibrary.com',
-                'password'   => Hash::make('password123'),
-            ]
-        );
+                'id_pegawai' => 'PGW-002',
+                'nama'       => 'Petugas 1',
+                'email'      => 'petugas1@elibrary.com',
+                'password'   => Hash::make('admin123'),
+            ],
+        ];
+
+        foreach ($data as $item) {
+            Pegawai::firstOrCreate(['id_pegawai' => $item['id_pegawai']], $item);
+        }
     }
 }

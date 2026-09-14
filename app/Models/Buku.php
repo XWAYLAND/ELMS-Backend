@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Buku extends Model
 {
@@ -16,14 +17,57 @@ class Buku extends Model
     protected $fillable = [
         'isbn',
         'judul',
+        'slug',
+        'cover',
         'edisi',
         'deskripsi_fisik',
         'bahasa',
-        'cover',
+        'tersedia',
         'id_jenis',
-        'id_penulis',
-        'id_penerbit',
+        'penulis',
+        'penerbit',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tersedia' => 'boolean',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Buku $buku) {
+            if (empty($buku->slug)) {
+                $buku->slug = Str::slug($buku->judul) . '-' . Str::slug($buku->isbn);
+            }
+            if (! isset($buku->tersedia)) {
+                $buku->tersedia = true;
+            }
+        });
+
+        static::updating(function (Buku $buku) {
+            if ($buku->isDirty('judul') && empty($buku->slug)) {
+                $buku->slug = Str::slug($buku->judul) . '-' . Str::slug($buku->isbn);
+            }
+        });
+    }
+
+    /**
+     * Accessor untuk URL Cover lengkap (mendukung URL eksternal, storage local, dan placeholder).
+     */
+    public function getCoverUrlAttribute(): ?string
+    {
+        if (empty($this->cover)) {
+            return null;
+        }
+
+        if (Str::startsWith($this->cover, ['http://', 'https://'])) {
+            return $this->cover;
+        }
+
+        return asset('storage/' . ltrim($this->cover, '/'));
+    }
 
     /**
      * Relasi ke jenis buku.
@@ -31,22 +75,6 @@ class Buku extends Model
     public function jenis(): BelongsTo
     {
         return $this->belongsTo(Jenis::class, 'id_jenis', 'id_jenis');
-    }
-
-    /**
-     * Relasi ke penulis buku.
-     */
-    public function penulis(): BelongsTo
-    {
-        return $this->belongsTo(Penulis::class, 'id_penulis', 'id_penulis');
-    }
-
-    /**
-     * Relasi ke penerbit buku.
-     */
-    public function penerbit(): BelongsTo
-    {
-        return $this->belongsTo(Penerbit::class, 'id_penerbit', 'id_penerbit');
     }
 
     /**
@@ -58,7 +86,23 @@ class Buku extends Model
     }
 
     /**
-     * Scope untuk pencarian berdasarkan judul, penulis, jenis, penerbit.
+     * Scope untuk buku yang tersedia untuk dipinjam.
+     */
+    public function scopeTersedia($query)
+    {
+        return $query->where('tersedia', true);
+    }
+
+    /**
+     * Scope filter berdasarkan jenis / kategori.
+     */
+    public function scopeByKategori($query, ?string $idJenis)
+    {
+        return $idJenis ? $query->where('id_jenis', $idJenis) : $query;
+    }
+
+    /**
+     * Scope untuk pencarian berdasarkan judul, ISBN, penulis, atau penerbit.
      */
     public function scopeSearch($query, ?string $keyword)
     {
@@ -70,38 +114,15 @@ class Buku extends Model
 
         return $query->where(function ($q) use ($term) {
             $q->whereRaw('LOWER(judul) LIKE ?', [$term])
-                ->orWhereHas('penulis', fn ($p) => $p->whereRaw('LOWER(nama_penulis) LIKE ?', [$term]))
-                ->orWhereHas('penerbit', fn ($p) => $p->whereRaw('LOWER(nama_penerbit) LIKE ?', [$term]))
+                ->orWhereRaw('LOWER(isbn) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(penulis) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(penerbit) LIKE ?', [$term])
                 ->orWhereHas('jenis', fn ($j) => $j->whereRaw('LOWER(nama_jenis) LIKE ?', [$term]));
         });
     }
 
     /**
-     * Scope untuk filter berdasarkan jenis.
-     */
-    public function scopeFilterJenis($query, ?string $idJenis)
-    {
-        return $idJenis ? $query->where('id_jenis', $idJenis) : $query;
-    }
-
-    /**
-     * Scope untuk filter berdasarkan penulis.
-     */
-    public function scopeFilterPenulis($query, ?string $idPenulis)
-    {
-        return $idPenulis ? $query->where('id_penulis', $idPenulis) : $query;
-    }
-
-    /**
-     * Scope untuk filter berdasarkan penerbit.
-     */
-    public function scopeFilterPenerbit($query, ?string $idPenerbit)
-    {
-        return $idPenerbit ? $query->where('id_penerbit', $idPenerbit) : $query;
-    }
-
-    /**
-     * Scope untuk filter berdasarkan bahasa.
+     * Scope filter berdasarkan bahasa.
      */
     public function scopeFilterBahasa($query, ?string $bahasa)
     {

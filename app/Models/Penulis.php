@@ -11,6 +11,7 @@ class Penulis extends Model
     protected $primaryKey = 'id_penulis';
     public $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
 
     protected $fillable = [
         'id_penulis',

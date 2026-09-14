@@ -14,32 +14,30 @@ class StoreBukuRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'isbn'           => ['required', 'string', 'max:20', 'unique:buku,isbn'],
-            'judul'          => ['required', 'string', 'max:255'],
-            'edisi'          => ['nullable', 'string', 'max:50'],
-            'deskripsi_fisik'=> ['nullable', 'string'],
-            'bahasa'         => ['required', 'string', 'max:50'],
-            'cover'          => ['nullable', 'url', 'max:500'],
-            'id_jenis'       => ['required', 'string', 'exists:jenis,id_jenis'],
-            'id_penulis'     => ['required', 'string', 'exists:penulis,id_penulis'],
-            'id_penerbit'    => ['required', 'string', 'exists:penerbit,id_penerbit'],
+            'isbn'            => ['required', 'string', 'max:30', 'unique:buku,isbn'],
+            'judul'           => ['required', 'string', 'max:255'],
+            'cover'           => ['nullable', 'string', 'max:500'],
+            'cover_file'      => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'edisi'           => ['nullable', 'string', 'max:100'],
+            'deskripsi_fisik' => ['nullable', 'string', 'max:255'],
+            'bahasa'          => ['nullable', 'string', 'max:50'],
+            'id_jenis'        => ['required', 'string', 'exists:jenis,id_jenis'],
+            'penulis'         => ['required', 'string', 'max:255'],
+            'penerbit'        => ['required', 'string', 'max:255'],
+            'tersedia'        => ['nullable', 'boolean'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'isbn.required'        => 'ISBN wajib diisi.',
-            'isbn.unique'          => 'ISBN sudah terdaftar.',
-            'judul.required'       => 'Judul buku wajib diisi.',
-            'bahasa.required'      => 'Bahasa wajib diisi.',
-            'cover.url'            => 'Cover harus berupa URL yang valid.',
-            'id_jenis.required'    => 'Jenis buku wajib dipilih.',
-            'id_jenis.exists'      => 'Jenis buku tidak ditemukan.',
-            'id_penulis.required'  => 'Penulis wajib dipilih.',
-            'id_penulis.exists'    => 'Penulis tidak ditemukan.',
-            'id_penerbit.required' => 'Penerbit wajib dipilih.',
-            'id_penerbit.exists'   => 'Penerbit tidak ditemukan.',
+            'isbn.required'     => 'ISBN wajib diisi.',
+            'isbn.unique'       => 'ISBN sudah terdaftar.',
+            'judul.required'    => 'Judul buku wajib diisi.',
+            'id_jenis.required' => 'Jenis buku wajib dipilih.',
+            'id_jenis.exists'   => 'Jenis buku tidak ditemukan.',
+            'penulis.required'  => 'Penulis wajib diisi.',
+            'penerbit.required' => 'Penerbit wajib diisi.',
         ];
     }
 }

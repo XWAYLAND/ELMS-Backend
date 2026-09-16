@@ -7,13 +7,14 @@ use App\Http\Requests\StoreBukuRequest;
 use App\Http\Requests\UpdateBukuRequest;
 use App\Http\Resources\BukuResource;
 use App\Models\Buku;
+use App\Services\ImageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class BukuController extends Controller
 {
+    public function __construct(protected ImageService $imageService) {}
+
     /**
      * Daftar buku dengan fitur pencarian & filter.
      *
@@ -71,8 +72,7 @@ class BukuController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('cover_file')) {
-            $path = $request->file('cover_file')->store('covers', 'public');
-            $data['cover'] = $path;
+            $data['cover'] = $this->imageService->uploadCover($request->file('cover_file'));
         }
 
         $buku = Buku::create($data);
@@ -111,11 +111,9 @@ class BukuController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('cover_file')) {
-            if ($buku->cover && ! Str::startsWith($buku->cover, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($buku->cover);
-            }
-            $path = $request->file('cover_file')->store('covers', 'public');
-            $data['cover'] = $path;
+            // Hapus cover lama sebelum upload yang baru
+            $this->imageService->deleteCover($buku->cover);
+            $data['cover'] = $this->imageService->uploadCover($request->file('cover_file'));
         }
 
         $buku->update($data);
@@ -130,14 +128,18 @@ class BukuController extends Controller
 
     /**
      * Hapus data buku.
+     * Menghapus record peminjaman terkait terlebih dahulu untuk mencegah
+     * error Foreign Key Constraint Violation (MySQL error 1451).
      */
     public function destroy(string $isbn): JsonResponse
     {
         $buku = Buku::findOrFail($isbn);
 
-        if ($buku->cover && ! Str::startsWith($buku->cover, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($buku->cover);
-        }
+        // Hapus semua record peminjaman yang terkait dengan buku ini
+        $buku->peminjaman()->delete();
+
+        // Hapus file cover dari storage
+        $this->imageService->deleteCover($buku->cover);
 
         $buku->delete();
 

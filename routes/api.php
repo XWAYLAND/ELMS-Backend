@@ -5,10 +5,12 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BukuController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JenisController;
+use App\Http\Controllers\Api\LoanVerificationController;
 use App\Http\Controllers\Api\PegawaiController;
 use App\Http\Controllers\Api\PeminjamanController;
 use App\Http\Controllers\Api\PenerbitController;
 use App\Http\Controllers\Api\PenulisController;
+use App\Http\Controllers\Api\RequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -88,4 +90,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('jenis', JenisController::class)->except(['index']);
     Route::apiResource('penulis', PenulisController::class)->except(['index']);
     Route::apiResource('penerbit', PenerbitController::class)->except(['index']);
+
+    // ── ADMIN — Verifikasi QR / Kode Unik ──
+    Route::prefix('admin/loans')->name('admin.loans.')->group(function () {
+        Route::post('verify-kode', [LoanVerificationController::class, 'verifyKode'])
+            ->name('verify-kode');
+        Route::get('by-transaksi/{id}', [LoanVerificationController::class, 'byTransaksi'])
+            ->name('by-transaksi');
+        Route::post('{id}/approve-via-kode', [LoanVerificationController::class, 'approveViaKode'])
+            ->name('approve-via-kode');
+        Route::post('{id}/reject-via-kode', [LoanVerificationController::class, 'rejectViaKode'])
+            ->name('reject-via-kode');
+        Route::post('{id}/return-via-kode', [LoanVerificationController::class, 'returnViaKode'])
+            ->name('return-via-kode');
+    });
+
+    // ── ADMIN — Daftar Pengajuan Peminjaman (dengan filter period & status) ──
+    Route::get('admin/requests', [RequestController::class, 'index'])->name('admin.requests.index');
 });

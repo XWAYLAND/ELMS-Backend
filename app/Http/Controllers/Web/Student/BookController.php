@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Buku;
+use App\Models\Favorit;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
@@ -34,18 +35,14 @@ class BookController extends Controller
 
     public function favorites(Request $request)
     {
-        if ($request->ajax() || $request->wantsJson() || $request->has('isbns')) {
-            $isbns = array_filter(explode(',', $request->get('isbns', '')));
-            $books = Buku::with(['jenis'])
-                ->whereIn('isbn', $isbns)
-                ->paginate(12);
+        $nis   = auth()->guard('anggota')->user()->nis;
+        $isbns = Favorit::where('nis', $nis)->pluck('isbn');
 
-            if ($request->ajax()) {
-                return response()->json($books);
-            }
-        }
-
-        $books = Buku::with(['jenis'])->get();
+        $books = Buku::with(['jenis'])
+            ->whereIn('isbn', $isbns)
+            ->orderBy('judul')
+            ->paginate(12)
+            ->withQueryString();
 
         return view('student.books.favorites', compact('books'));
     }

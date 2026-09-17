@@ -79,6 +79,7 @@
               request()->routeIs('admin.dashboard') => 'dashboard',
               request()->routeIs('admin.books.*')   => 'books',
               request()->routeIs('admin.requests.*')=> 'requests',
+              request()->routeIs('admin.users.*')   => 'users',
               default                               => null,
           };
         @endphp
@@ -94,6 +95,10 @@
         <a href="{{ route('admin.requests.index') }}"
            class="nav-link {{ $activeSection === 'requests' ? 'active' : '' }}">
           Requests
+        </a>
+        <a href="{{ route('admin.users.index') }}"
+           class="nav-link {{ $activeSection === 'users' ? 'active' : '' }}">
+          Users
         </a>
       </nav>
 

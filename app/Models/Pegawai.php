@@ -15,7 +15,7 @@ class Pegawai extends Authenticatable
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['id_pegawai', 'nama', 'password'];
+    protected $fillable = ['id_pegawai', 'nama', 'email', 'password'];
 
     protected $hidden = ['password'];
 

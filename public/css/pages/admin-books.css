@@ -242,10 +242,13 @@
 /* ── Modals (Delete Confirmation) ── */
 .modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -269,21 +272,21 @@
   justify-content: center;
 }
 
-.modal-cancel-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #FF0004;
-  margin-bottom: 12px;
-  line-height: 1.2;
-}
+  .modal-cancel-title {
+    font-size: 32px;
+    font-weight: 400; /* not bold */
+    color: #FF0004;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
 
-.modal-cancel-desc {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 32px;
-  line-height: 1.4;
-}
+  .modal-cancel-desc {
+    font-size: 18px;
+    font-weight: 400; /* not bold */
+    color: #111827;
+    margin-bottom: 32px;
+    line-height: 1.4;
+  }
 
 .modal-cancel-actions {
   display: flex;
@@ -302,6 +305,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
+
+  font-family: var(--font-base);
 }
 
 .btn-cancel-close:hover {
@@ -319,6 +324,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;
+
+  font-family: var(--font-base);
 }
 
 .btn-cancel-confirm:hover {

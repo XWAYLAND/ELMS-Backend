@@ -2,131 +2,97 @@
 
 namespace App\Services;
 
+use App\Models\Buku;
 use App\Models\Peminjaman;
+use App\Models\Pegawai;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LoanVerificationService
 {
-    /**
-     * Verifikasi kode unik / ID transaksi yang dikirim oleh admin.
-     *
-     * @param  string  $kode  Kode unik atau ID transaksi
-     * @return Peminjaman
-     *
-     * @throws HttpException  404 jika tidak ditemukan
-     */
-    public function verifyKode(string $kode): Peminjaman
+    public function findByKode(string $kode): ?Peminjaman
     {
-        $kode = trim($kode);
-
-        $peminjaman = Peminjaman::with(['anggota', 'buku.jenis', 'pegawai'])
-            ->where('kode_unik', $kode)
-            ->orWhere('id_transaksi', $kode)
+        $loan = Peminjaman::with(['buku', 'anggota'])
+            ->findByValidKode($kode)
             ->first();
 
-        if (! $peminjaman) {
-            abort(404, 'Kode unik atau ID transaksi tidak ditemukan.');
-        }
-
-        return $peminjaman;
+        return $loan;
     }
 
-    /**
-     * Ambil detail peminjaman berdasarkan ID Transaksi.
-     *
-     * @param  string  $idTransaksi
-     * @return Peminjaman
-     *
-     * @throws HttpException  404 jika tidak ditemukan
-     */
-    public function findByTransaksi(string $idTransaksi): Peminjaman
+    public function approve(string $id): Peminjaman
     {
-        return Peminjaman::with(['anggota', 'buku.jenis', 'pegawai'])
-            ->where('id_transaksi', $idTransaksi)
-            ->firstOrFail();
-    }
+        return DB::transaction(function () use ($id) {
+            $loan = Peminjaman::with('buku')->findOrFail($id);
 
-    /**
-     * Setujui peminjaman (ubah status: menunggu → aktif).
-     *
-     * @param  Peminjaman   $peminjaman
-     * @param  string|null  $idPegawai  ID pegawai yang menyetujui
-     * @return Peminjaman
-     *
-     * @throws HttpException  422 jika tidak bisa disetujui
-     */
-    public function approve(Peminjaman $peminjaman, ?string $idPegawai = null): Peminjaman
-    {
-        if (! $peminjaman->canBeApproved()) {
-            $message = $peminjaman->isKodeExpired()
-                ? 'Kode unik telah kadaluwarsa (>24 jam).'
-                : 'Peminjaman tidak dapat disetujui karena statusnya bukan menunggu.';
-
-            abort(422, $message);
-        }
-
-        DB::transaction(function () use ($peminjaman, $idPegawai) {
-            $peminjaman->update([
-                'status'      => 'aktif',
-                'batas_waktu' => now()->addDays($peminjaman->durasi_hari ?? 7),
-                'id_pegawai'  => $idPegawai,
-            ]);
-        });
-
-        return $peminjaman->load(['anggota', 'buku.jenis', 'pegawai']);
-    }
-
-    /**
-     * Tolak peminjaman (ubah status: menunggu → ditolak).
-     *
-     * @param  Peminjaman  $peminjaman
-     * @return Peminjaman
-     *
-     * @throws HttpException  422 jika status bukan menunggu
-     */
-    public function reject(Peminjaman $peminjaman): Peminjaman
-    {
-        if ($peminjaman->status !== 'menunggu') {
-            abort(422, 'Hanya permohonan berstatus menunggu yang dapat ditolak.');
-        }
-
-        DB::transaction(function () use ($peminjaman) {
-            $peminjaman->update(['status' => 'ditolak']);
-
-            if ($peminjaman->buku) {
-                $peminjaman->buku->update(['tersedia' => true]);
+            if (!$loan->canBeApproved()) {
+                throw new \RuntimeException('Peminjaman tidak dapat disetujui (status: ' . $loan->status . ').');
             }
-        });
 
-        return $peminjaman->load(['anggota', 'buku.jenis', 'pegawai']);
-    }
-
-    /**
-     * Konfirmasi pengembalian buku oleh admin.
-     *
-     * @param  Peminjaman  $peminjaman
-     * @return Peminjaman
-     *
-     * @throws HttpException  422 jika tidak bisa dikembalikan
-     */
-    public function confirmReturn(Peminjaman $peminjaman): Peminjaman
-    {
-        if (! $peminjaman->canBeReturned()) {
-            abort(422, 'Peminjaman ini tidak berada dalam status yang dapat dikembalikan.');
-        }
-
-        DB::transaction(function () use ($peminjaman) {
-            $peminjaman->update([
-                'status'          => 'dikembalikan',
-                'tanggal_kembali' => now(),
+            $loan->update([
+                'status'     => 'aktif',
+                'id_pegawai' => Auth::guard('pegawai')->id() ?? $this->resolvePegawaiId(),
+                'batas_waktu'=> $loan->batas_waktu ?? now()->addDays($loan->durasi_hari),
             ]);
 
-            if ($peminjaman->buku) {
-                $peminjaman->buku->update(['tersedia' => true]);
-            }
+            return $loan;
         });
+    }
 
-        return $peminjaman->load(['anggota', 'buku.jenis', 'pegawai']);
+    public function reject(string $id): Peminjaman
+    {
+        return DB::transaction(function () use ($id) {
+            $loan = Peminjaman::with('buku')->findOrFail($id);
+
+            if ($loan->status !== 'menunggu') {
+                throw new \RuntimeException('Hanya peminjaman berstatus menunggu yang dapat ditolak.');
+            }
+
+            if ($loan->buku) {
+                $loan->buku->update(['tersedia' => true]);
+            }
+
+            $loan->update([
+                'status'     => 'ditolak',
+                'id_pegawai' => Auth::guard('pegawai')->id() ?? $this->resolvePegawaiId(),
+            ]);
+
+            return $loan;
+        });
+    }
+
+    public function confirmReturn(string $id): Peminjaman
+    {
+        return DB::transaction(function () use ($id) {
+            $loan = Peminjaman::with('buku')->findOrFail($id);
+
+            if (!$loan->canBeReturned()) {
+                throw new \RuntimeException('Buku ini tidak dapat dikonfirmasi pengembaliannya.');
+            }
+
+            if ($loan->buku) {
+                $loan->buku->update(['tersedia' => true]);
+            }
+
+            $loan->update([
+                'status'         => 'dikembalikan',
+                'tanggal_kembali'=> now(),
+                'id_pegawai'     => Auth::guard('pegawai')->id() ?? $this->resolvePegawaiId(),
+            ]);
+
+            return $loan;
+        });
+    }
+
+    private function resolvePegawaiId(): ?string
+    {
+        $user = Auth::user();
+        if ($user && isset($user->id_pegawai)) {
+            return $user->id_pegawai;
+        }
+        if ($user) {
+            $pegawai = Pegawai::where('email', $user->email)->first();
+            return $pegawai?->id_pegawai;
+        }
+        return null;
     }
 }

@@ -1,0 +1,361 @@
+/* public/css/pages/loan-status.css */
+
+.loan-status-page {
+  padding: var(--space-xl) var(--space-lg);
+  max-width: 1280px; margin: 0 auto;
+}
+
+.svg-heading-placeholder--loan-status {
+  margin-bottom: 24px;
+}
+
+.svg-heading-placeholder--loan-status img {
+  height: 48px;
+}
+
+.loan-status-waiting {
+  color: var(--color-muted);
+}
+
+.loan-table-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: visible;
+}
+
+/* Header */
+.loan-table-header {
+  display: flex; align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+.loan-col-book   { flex: 5; font-size: var(--text-md); color: var(--color-muted); }
+.loan-col-period { flex: 4; font-size: var(--text-md); color: var(--color-muted); }
+.loan-col-status { flex: 2; font-size: var(--text-md); color: var(--color-muted); text-align: right; }
+
+/* Rows */
+.loan-table-row {
+  display: flex; align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.1s;
+}
+.loan-table-row:last-child { border-bottom: none; }
+.loan-table-row:hover { background: #FAFAFA; }
+
+/* Book cell */
+.loan-book-cell { display: flex; align-items: center; gap: 12px; flex: 5; }
+.loan-book-thumb {
+  width: 48px; height: 64px;
+  object-fit: cover; border-radius: 6px; flex-shrink: 0;
+}
+.loan-book-info-title  { font-size: var(--text-md); font-weight: 700; }
+.loan-book-info-author { font-size: var(--text-sm); color: var(--color-muted); }
+
+/* Period cell */
+.loan-period-cell { flex: 4; font-size: var(--text-md); }
+
+/* Status cell */
+.loan-status-cell {
+  flex: 2; display: flex;
+  align-items: center; justify-content: flex-end; gap: 12px;
+  position: relative;
+}
+
+/* Status badges — loan page specific colors */
+.loan-badge {
+  display: inline-block;
+  padding: 5px 16px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.loan-badge--loaning        { background: #FFF3E0; color: #FF8400; }
+.loan-badge--pending_return { background: #E0E7FF; color: #141DFE; }
+.loan-badge--pending  { background: #FFF3E0; color: #FF8400; }
+.loan-badge--late     { background: #FFEBEE; color: #FF0034; }
+.loan-badge--returned { background: #F5F5F5; color: #9E9E9E; }
+.loan-badge--rejected { background: #FFEBEE; color: #FF0034; }
+
+/* Hamburger menu button */
+.loan-menu-btn {
+  background: none; border: none;
+  color: var(--color-muted); cursor: pointer;
+  font-size: 20px; line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.loan-menu-btn:hover {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+/* Dropdown */
+.loan-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border: 1px solid var(--color-border);
+  min-width: 170px;
+  z-index: 50;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.loan-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: var(--font-base);
+}
+.loan-dropdown-item:hover {
+  background: #F9FAFB;
+  color: var(--color-primary);
+}
+.loan-dropdown-item--danger {
+  color: #FF0004;
+}
+.loan-dropdown-item--danger:hover {
+  background: #FFF5F5;
+  color: #FF0004;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+.modal-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  width: 440px;
+  max-width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s, background-color 0.15s;
+}
+.modal-close-btn:hover {
+  color: var(--color-text);
+  background-color: #F3F4F6;
+}
+
+/* QR Modal Specific */
+.modal-heading-qr {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+.modal-qr-box {
+  width: 220px;
+  height: 220px;
+  background: #FAFAFA;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-md);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.modal-qr-box svg {
+  width: 100%;
+  height: 100%;
+}
+.modal-kode-unik {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 3px;
+  margin-top: 18px;
+}
+
+/* Cancel Modal Specific */
+.modal-cancel-icon {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+.modal-cancel-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #FF0004;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+.modal-cancel-desc {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+.modal-cancel-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+.btn-cancel-close {
+  flex: 1;
+  padding: 12px 20px;
+  background: white;
+  border: 1.5px solid #D1D5DB;
+  border-radius: var(--radius-md);
+  color: #6B7280;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-base);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-cancel-close:hover {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+  color: #374151;
+}
+.btn-cancel-confirm {
+  flex: 1;
+  padding: 12px 20px;
+  background: #FF0004;
+  border: 1.5px solid #FF0004;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-base);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-return-confirm {
+  flex: 1;
+  padding: 12px 20px;
+  background: var(--color-primary, #141DFE);
+  border: 1.5px solid var(--color-primary, #141DFE);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-base);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-return-confirm:hover {
+  opacity: 0.9;
+}
+
+/* Empty state */
+.loan-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--color-muted);
+  font-size: var(--text-md);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .loan-table-header { display: none; }
+  .loan-table-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .loan-status-cell { width: 100%; justify-content: flex-start; }
+}
+
+/* Pagination */
+.pagination-wrapper {
+  margin: var(--space-lg) 0;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-nav {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: 500;
+  font-family: var(--font-base);
+  text-decoration: none;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.page-btn:hover {
+  background: #F3F4F6;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.page-btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  pointer-events: none;
+}
+
+.page-btn--disabled {
+  color: var(--color-muted);
+  pointer-events: none;
+  background: #F9FAFB;
+  border-color: #E5E7EB;
+}
+
+@media (max-width: 768px) {
+  .pagination-nav { flex-wrap: wrap; justify-content: center; }
+  .page-btn { min-width: 36px; height: 36px; font-size: 13px; padding: 0 8px; }
+}

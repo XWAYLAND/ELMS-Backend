@@ -4,95 +4,66 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImageService
 {
     /**
-     * Upload file gambar cover dan konversi ke format WebP (kualitas 80%).
-     * File disimpan di storage/app/public/covers/.
-     *
-     * @param  UploadedFile  $file
-     * @return string  Path relatif dari storage public (contoh: "covers/abc123.webp")
+     * Convert uploaded image to WebP and store on the public disk.
+     * Output always .webp regardless of input format (jpg/png/webp).
+     * Returns the storage-relative path (e.g. "covers/123.webp").
      */
-    public function uploadCover(UploadedFile $file): string
+    public function storeAsWebp(UploadedFile $file, string $folder, string $name, int $quality = 80): string
     {
-        $filename = Str::uuid()->toString() . '.webp';
-        $storagePath = 'covers/' . $filename;
+        $src = $this->createFromFile($file);
 
-        // Coba konversi ke WebP jika ekstensi GD tersedia
-        if (extension_loaded('gd') && function_exists('imagewebp')) {
-            $webpContent = $this->convertToWebp($file->getRealPath(), $file->getMimeType());
-
-            if ($webpContent !== null) {
-                Storage::disk('public')->put($storagePath, $webpContent);
-                return $storagePath;
-            }
+        if (!$src) {
+            throw new \RuntimeException('Unsupported image format. Allowed: JPG, PNG, WebP.');
         }
 
-        // Fallback: simpan file asli tanpa konversi
-        $extension = $file->getClientOriginalExtension() ?: $file->extension();
-        $fallbackFilename = Str::uuid()->toString() . '.' . $extension;
-        $fallbackPath = 'covers/' . $fallbackFilename;
+        Storage::disk('public')->makeDirectory($folder);
 
-        $file->storeAs('covers', $fallbackFilename, 'public');
+        $filename = $name . '.webp';
+        $fullPath = Storage::disk('public')->path($folder . '/' . $filename);
 
-        return $fallbackPath;
+        imagewebp($src, $fullPath, $quality);
+
+        imagedestroy($src);
+
+        return $folder . '/' . $filename;
     }
 
     /**
-     * Hapus file cover dari storage (hanya untuk file lokal, bukan URL eksternal).
-     *
-     * @param  string|null  $path  Path relatif dari storage public
+     * Delete an image from the public disk.
+     * Returns true if file existed and was deleted, false otherwise.
      */
-    public function deleteCover(?string $path): void
+    public function delete(?string $path): bool
     {
-        if (empty($path)) {
-            return;
+        if (!$path) {
+            return false;
         }
-
-        // Jangan hapus jika merupakan URL eksternal
-        if (Str::startsWith($path, ['http://', 'https://'])) {
-            return;
-        }
-
-        Storage::disk('public')->delete($path);
+        return Storage::disk('public')->delete($path);
     }
 
-    /**
-     * Konversi file gambar ke konten binary WebP menggunakan GD.
-     *
-     * @param  string  $realPath   Path absolute file di filesystem sementara
-     * @param  string  $mimeType   MIME type file asli
-     * @return string|null         Konten binary WebP, atau null jika gagal
-     */
-    private function convertToWebp(string $realPath, string $mimeType): ?string
+    private function createFromFile(UploadedFile $file)
     {
-        $image = match ($mimeType) {
-            'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($realPath),
-            'image/png'               => @imagecreatefrompng($realPath),
-            'image/webp'              => @imagecreatefromwebp($realPath),
-            'image/gif'               => @imagecreatefromgif($realPath),
-            default                   => null,
+        $type = @exif_imagetype($file->getPathname());
+
+        return match ($type) {
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($file->getPathname()),
+            IMAGETYPE_PNG  => $this->createFromPng($file->getPathname()),
+            IMAGETYPE_WEBP => @imagecreatefromwebp($file->getPathname()),
+            default        => null,
         };
+    }
 
-        if (! $image) {
-            return null;
+    private function createFromPng(string $path)
+    {
+        $img = @imagecreatefrompng($path);
+        if ($img) {
+            imagepalettetotruecolor($img);
+            imagealphablending($img, true);
+            imagesavealpha($img, true);
         }
-
-        // Pertahankan transparansi untuk PNG/GIF
-        if (in_array($mimeType, ['image/png', 'image/gif'])) {
-            imagepalettetotruecolor($image);
-            imagealphablending($image, true);
-            imagesavealpha($image, true);
-        }
-
-        ob_start();
-        $success = imagewebp($image, null, 80); // Kualitas 80%
-        $content = ob_get_clean();
-
-        imagedestroy($image);
-
-        return ($success && $content) ? $content : null;
+        return $img;
     }
 }

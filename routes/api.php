@@ -92,7 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('penerbit', PenerbitController::class)->except(['index']);
 
     // ── ADMIN — Verifikasi QR / Kode Unik ──
-    Route::prefix('admin/loans')->name('admin.loans.')->group(function () {
+    Route::prefix('admin/loans')->name('api.admin.loans.')->group(function () {
         Route::post('verify-kode', [LoanVerificationController::class, 'verifyKode'])
             ->name('verify-kode');
         Route::get('by-transaksi/{id}', [LoanVerificationController::class, 'byTransaksi'])
@@ -106,5 +106,5 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ── ADMIN — Daftar Pengajuan Peminjaman (dengan filter period & status) ──
-    Route::get('admin/requests', [RequestController::class, 'index'])->name('admin.requests.index');
+    Route::get('admin/requests', [RequestController::class, 'index'])->name('api.admin.requests.index');
 });

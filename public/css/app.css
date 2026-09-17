@@ -1,0 +1,159 @@
+/* public/css/app.css */
+
+/* ── Google Font ── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* ── Global Page Background Layer ── */
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+.global-page-bg {
+  position: fixed;
+  top: -250px;
+  right: -200px;
+  width: 860px;
+  height: 1080px;
+  pointer-events: none;
+  z-index: 0;
+  transform: rotate(-54deg);
+  transform-origin: center;
+  opacity: 0.50;
+}
+
+main {
+  position: relative;
+
+}
+:root {
+  /* Colors */
+  --color-primary:    #141DFE;
+  --color-bg:         #FFFFFF;
+  --color-text:       #000000;
+  --color-muted:      #9E9E9E;
+  --color-border:     #E0E0E0;
+  --color-surface:    #F5F5F5;
+  --color-success:    #00F700;
+  --color-warning:    #FF8400;
+  --color-danger:     #FF0034;
+
+  /* Typography */
+  --font-base:        'Poppins', sans-serif;
+  --text-xs:          12px;
+  --text-sm:          13px;
+  --text-md:          14px;
+  --text-base:        16px;
+  --text-lg:          18px;
+  --text-xl:          24px;
+
+  /* Spacing */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-xxl:  48px;
+
+  /* Border radius */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-pill: 30px;
+
+  /* Shadows */
+  --shadow-card: 2px 4px 10px rgba(0,0,0,0.12);
+  --shadow-carousel: 4px 8px 16px rgba(0,0,0,0.18);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[x-cloak] { display: none !important; }
+
+body {
+  font-family: var(--font-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+img { display: block; max-width: 100%; }
+a   { text-decoration: none; color: inherit; }
+
+/* ── Toast Notification (Global) ── */
+.toast-notification {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 12px 24px;
+  background: var(--color-bg);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-base);
+  font-size: var(--text-md);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.toast-success { color: #00A100; }
+.toast-error { color: var(--color-danger); }
+.toast-info { color: var(--color-primary); }
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 23px;
+  height: 22px;
+}
+.toast-icon svg {
+  display: block;
+  width: 24 px;
+  height: 22px;
+}
+.toast-message {
+  display: block;
+  line-height: 1.25;
+}
+.toast-enter,
+.toast-leave {
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+.toast-enter-start,
+.toast-leave-end {
+  opacity: 0;
+  transform: translate3d(24px, 0, 0);
+}
+.toast-enter-end,
+.toast-leave-start {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ── Favorite Button States ── */
+.fab-action.is-favorited {
+  color: var(--color-primary);
+}
+.fab-action svg {
+  transition: fill 0.2s ease;
+}
+.fab-action svg.filled {
+  fill: currentColor;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .toast-notification {
+    top: 80px;
+    right: 16px;
+    left: 16px;
+    transform: none;
+  }
+}

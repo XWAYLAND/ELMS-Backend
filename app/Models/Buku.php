@@ -3,129 +3,95 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Buku extends Model
 {
     protected $table = 'buku';
     protected $primaryKey = 'isbn';
-    public $keyType = 'string';
     public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'isbn',
-        'judul',
-        'slug',
-        'cover',
-        'edisi',
-        'deskripsi_fisik',
-        'bahasa',
-        'tersedia',
-        'id_jenis',
-        'penulis',
-        'penerbit',
+        'isbn', 'judul', 'slug', 'cover', 'edisi', 'deskripsi_fisik',
+        'bahasa', 'tersedia', 'id_jenis', 'penulis', 'penerbit'
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'tersedia' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'tersedia' => 'boolean',
+    ];
 
-    protected static function booted(): void
+    protected $appends = ['cover_url'];
+
+    protected static function boot()
     {
-        static::creating(function (Buku $buku) {
-            if (empty($buku->slug)) {
-                $buku->slug = Str::slug($buku->judul) . '-' . Str::slug($buku->isbn);
-            }
-            if (! isset($buku->tersedia)) {
-                $buku->tersedia = true;
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->slug)) {
+                $model->slug = Str::slug($model->judul) . '-' . $model->isbn;
             }
         });
 
-        static::updating(function (Buku $buku) {
-            if ($buku->isDirty('judul') && empty($buku->slug)) {
-                $buku->slug = Str::slug($buku->judul) . '-' . Str::slug($buku->isbn);
+        static::updating(function ($model) {
+            if ($model->isDirty('judul')) {
+                $model->slug = Str::slug($model->judul) . '-' . $model->isbn;
             }
         });
     }
 
-    /**
-     * Accessor untuk URL Cover lengkap (mendukung URL eksternal, storage local, dan placeholder).
-     */
-    public function getCoverUrlAttribute(): ?string
-    {
-        if (empty($this->cover)) {
-            return null;
-        }
-
-        if (Str::startsWith($this->cover, ['http://', 'https://'])) {
-            return $this->cover;
-        }
-
-        return asset('storage/' . ltrim($this->cover, '/'));
-    }
-
-    /**
-     * Relasi ke jenis buku.
-     */
-    public function jenis(): BelongsTo
+    public function jenis()
     {
         return $this->belongsTo(Jenis::class, 'id_jenis', 'id_jenis');
     }
 
-    /**
-     * Relasi ke peminjaman buku ini.
-     */
-    public function peminjaman(): HasMany
+    public function peminjaman()
     {
         return $this->hasMany(Peminjaman::class, 'isbn', 'isbn');
     }
 
-    /**
-     * Scope untuk buku yang tersedia untuk dipinjam.
-     */
-    public function scopeTersedia($query)
+    public function scopeTersedia(Builder $query): Builder
     {
         return $query->where('tersedia', true);
     }
 
-    /**
-     * Scope filter berdasarkan jenis / kategori.
-     */
-    public function scopeByKategori($query, ?string $idJenis)
+    public function scopeByKategori(Builder $query, ?string $idJenis): Builder
     {
-        return $idJenis ? $query->where('id_jenis', $idJenis) : $query;
+        return $query->when($idJenis, fn($q) => $q->where('id_jenis', $idJenis));
     }
 
-    /**
-     * Scope untuk pencarian berdasarkan judul, ISBN, penulis, atau penerbit.
-     */
-    public function scopeSearch($query, ?string $keyword)
+    public function scopeFilterBahasa(Builder $query, ?string $bahasa): Builder
     {
-        if (empty($keyword)) {
-            return $query;
-        }
+        return $query->when($bahasa, fn($q) => $q->where('bahasa', $bahasa));
+    }
 
-        $term = '%' . strtolower($keyword) . '%';
-
-        return $query->where(function ($q) use ($term) {
-            $q->whereRaw('LOWER(judul) LIKE ?', [$term])
-                ->orWhereRaw('LOWER(isbn) LIKE ?', [$term])
-                ->orWhereRaw('LOWER(penulis) LIKE ?', [$term])
-                ->orWhereRaw('LOWER(penerbit) LIKE ?', [$term])
-                ->orWhereHas('jenis', fn ($j) => $j->whereRaw('LOWER(nama_jenis) LIKE ?', [$term]));
+    public function scopeSearch(Builder $query, ?string $keyword): Builder
+    {
+        return $query->when($keyword, function ($q) use ($keyword) {
+            $q->where(function ($searchQuery) use ($keyword) {
+                $searchQuery->where('judul', 'LIKE', "%{$keyword}%")
+                    ->orWhere('isbn', 'LIKE', "%{$keyword}%")
+                    ->orWhere('penulis', 'LIKE', "%{$keyword}%");
+            });
         });
     }
 
-    /**
-     * Scope filter berdasarkan bahasa.
-     */
-    public function scopeFilterBahasa($query, ?string $bahasa)
+    public function getCoverUrlAttribute(): string
     {
-        return $bahasa ? $query->where('bahasa', $bahasa) : $query;
+        if (empty($this->cover)) {
+            return asset('images/book-placeholder.png');
+        }
+        if (str_starts_with($this->cover, 'http')) {
+            return $this->cover;
+        }
+
+        if (! Storage::disk('public')->exists($this->cover)) {
+            return asset('images/book-placeholder.png');
+        }
+
+        $timestamp = Storage::disk('public')->lastModified($this->cover);
+        return asset('storage/' . $this->cover) . '?v=' . $timestamp;
     }
 }
